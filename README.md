@@ -17,23 +17,24 @@ SmartThings 허브의 Edge 드라이버는 **같은 LAN 안의 IP에만** 통신
 
 ## Docker로 실행하기
 
+이미지는 GitHub Actions가 빌드해 Docker Hub의 [`cmsong111/edgebridge`](https://hub.docker.com/r/cmsong111/edgebridge)에 올립니다. 일반 서버(amd64)와 라즈베리 파이(arm64, arm/v7)를 모두 지원하므로, 서버에서는 이미지를 받아 실행하기만 하면 됩니다.
+
 준비물:
 
 - Docker와 Docker Compose가 설치된, LAN에 상시 켜져 있는 서버 (Linux 권장)
 - SmartThings API를 쓸 경우 [Personal Access Token](https://account.smartthings.com/tokens)
 
-### 1. 소스 받기
+### 1. 파일 받기
+
+`docker-compose.yml`과 설정 예시 파일만 있으면 됩니다.
 
 ```sh
-git clone <이 저장소 URL> edgebridge
-cd edgebridge
+mkdir edgebridge && cd edgebridge
+curl -O https://raw.githubusercontent.com/cmsong111/edgebridge/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/cmsong111/edgebridge/main/.env.example
 ```
 
-### 2. 설정 파일 만들기
-
-```sh
-cp .env.example .env
-```
+### 2. 설정
 
 `.env`를 열어 필요한 값만 채웁니다. 보통은 아래 두 개만 보면 됩니다.
 
@@ -49,7 +50,7 @@ HOST_PORT=8088
 ### 3. 실행
 
 ```sh
-docker compose up -d --build
+docker compose up -d
 ```
 
 ### 4. 동작 확인
@@ -78,16 +79,28 @@ SmartThings 앱에서 EdgeBridge를 쓰는 기기의 설정에 들어가 브릿�
 | 로그 보기 | `docker compose logs -f` |
 | 재시작 | `docker compose restart` |
 | `.env` 수정 후 반영 | `docker compose up -d` |
-| 코드 업데이트 | `git pull && docker compose up -d --build` |
+| 새 버전으로 업데이트 | `docker compose pull && docker compose up -d` |
 | 중지 | `docker compose down` |
 | 중지하고 등록 정보까지 삭제 | `docker compose down -v` |
 
 - 드라이버 등록 정보(`.registrations`)는 `edgebridge-data` 볼륨에 저장되므로 컨테이너를 다시 만들어도 유지됩니다.
 - 컨테이너는 `restart: unless-stopped`로 설정되어 있어 서버가 재부팅되면 자동으로 다시 뜹니다.
 
-### Portainer 같은 스택 도구로 배포할 때
+### Portainer로 배포할 때
 
-Git 저장소를 스택으로 바로 배포하면 `.env` 파일이 없습니다. 이때는 스택의 환경 변수 설정에 [설정](#설정-환경-변수) 표의 변수를 같은 이름으로 넣으면 됩니다. 보통 `SMARTTHINGS_TOKEN`과 `HOST_PORT`만 넣으면 충분합니다.
+1. **Stacks → Add stack**에서 웹 에디터에 `docker-compose.yml` 내용을 붙여 넣거나, Repository로 이 저장소를 지정합니다.
+2. `.env` 파일 대신 스택의 **Environment variables**에 [설정](#설정-환경-변수) 표의 변수를 같은 이름으로 넣습니다. 보통 `SMARTTHINGS_TOKEN`과 `HOST_PORT`만 넣으면 충분합니다.
+3. 새 버전이 올라오면 스택을 업데이트할 때 이미지를 다시 받도록(re-pull) 선택합니다.
+
+### 소스에서 직접 빌드하기
+
+코드를 고쳐서 바로 돌려 보고 싶을 때는 이미지를 로컬에서 빌드합니다. 같은 이름의 이미지가 로컬에 있으면 `docker compose up`이 그것을 씁니다.
+
+```sh
+git clone https://github.com/cmsong111/edgebridge.git && cd edgebridge
+docker build -t cmsong111/edgebridge:latest .
+docker compose up -d
+```
 
 ### 주의: 등록 기능은 출발지 IP로 기기를 구분합니다
 
@@ -256,10 +269,26 @@ POST http://192.168.1.140:8088/<드라이버가 정한 경로>     예: /mydevic
 
 `POST /api/ping`은 아무 처리 없이 `200`을 돌려줍니다. 모니터링 용도로 쓰며 로그에도 남지 않습니다 (디버그 모드 제외).
 
+## 이미지 배포 (GitHub Actions)
+
+[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)이 이미지를 빌드해 Docker Hub에 올립니다. `edgebridge.py`, `requirements.txt`, `Dockerfile`이 바뀔 때만 실행되며, Actions 탭에서 직접 실행할 수도 있습니다.
+
+| 이벤트 | 올라가는 태그 |
+| --- | --- |
+| `main`에 푸시 | `latest`, `sha-<커밋>` |
+| `v1.2.3` 형식의 태그 푸시 | `1.2.3`, `1.2`, `sha-<커밋>` |
+| `main` 대상 PR | 빌드만 확인하고 올리지 않음 |
+
+저장소의 **Settings → Secrets and variables → Actions**에 아래 시크릿이 있어야 합니다.
+
+| 이름 | 값 |
+| --- | --- |
+| `DOCKERHUB_TOKEN` | Docker Hub **Account settings → Personal access tokens**에서 만든 토큰 (권한: Read & Write) |
+
 ## 원본과 달라진 점
 
 - 설정 파일 `edgebridge.cfg` 대신 `.env`(환경 변수)를 씁니다. 키 이름은 `Server_Port` → `SERVER_PORT`처럼 대문자로 바뀌었습니다.
-- `Dockerfile`과 `docker-compose.yml`을 저장소 최상단으로 옮겨, 파일을 복사하지 않고 바로 빌드할 수 있습니다.
+- `Dockerfile`과 `docker-compose.yml`을 저장소 최상단으로 옮겼고, GitHub Actions가 멀티 아키텍처 이미지를 Docker Hub에 올립니다.
 - `.cfg`를 읽던 미리 빌드한 실행 파일(Windows `.exe`, Raspberry Pi용)은 제거했습니다. Python 스크립트나 Docker로 실행하세요.
 - 잘못된 요청이 들어와도 처리 중 오류로 끊기지 않고 `400`/`404`/`405`/`502`로 응답합니다.
 - 재시작 후 같은 기기를 다시 등록하면 중복 등록되던 문제와, `FORWARDING_TIMEOUT` 설정이 적용되지 않던 문제를 고쳤습니다.

@@ -1,6 +1,6 @@
 services:
   edgebridge:
-    build: .
+    image: cmsong111/edgebridge:latest
     container_name: edgebridge
     # Values come from the shell, the stack's environment settings, or a local .env file (if present)
     environment:
