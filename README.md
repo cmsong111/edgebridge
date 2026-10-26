@@ -42,7 +42,9 @@ SMARTTHINGS_TOKEN=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 HOST_PORT=8088
 ```
 
-`.env`는 `.gitignore`와 `.dockerignore`에 들어 있어 GitHub에도, Docker 이미지에도 들어가지 않습니다. 전체 항목은 [설정](#설정-env)을 참고하세요.
+`.env`는 `.gitignore`와 `.dockerignore`에 들어 있어 GitHub에도, Docker 이미지에도 들어가지 않습니다. 전체 항목은 [설정](#설정-환경-변수)을 참고하세요.
+
+`.env`는 없어도 됩니다. `docker-compose.yml`이 모든 설정을 `${변수:-기본값}` 형태로 선언하고 있어서, 값이 없으면 기본값으로 실행됩니다.
 
 ### 3. 실행
 
@@ -83,6 +85,10 @@ SmartThings 앱에서 EdgeBridge를 쓰는 기기의 설정에 들어가 브릿�
 - 드라이버 등록 정보(`.registrations`)는 `edgebridge-data` 볼륨에 저장되므로 컨테이너를 다시 만들어도 유지됩니다.
 - 컨테이너는 `restart: unless-stopped`로 설정되어 있어 서버가 재부팅되면 자동으로 다시 뜹니다.
 
+### Portainer 같은 스택 도구로 배포할 때
+
+Git 저장소를 스택으로 바로 배포하면 `.env` 파일이 없습니다. 이때는 스택의 환경 변수 설정에 [설정](#설정-환경-변수) 표의 변수를 같은 이름으로 넣으면 됩니다. 보통 `SMARTTHINGS_TOKEN`과 `HOST_PORT`만 넣으면 충분합니다.
+
 ### 주의: 등록 기능은 출발지 IP로 기기를 구분합니다
 
 LAN 기기에서 온 메시지를 드라이버로 넘길 때 EdgeBridge는 **요청을 보낸 IP**를 보고 어느 드라이버로 보낼지 정합니다.
@@ -92,7 +98,9 @@ LAN 기기에서 온 메시지를 드라이버로 넘길 때 EdgeBridge는 **요
 
 외부로 요청을 전달하는 기능(`/api/forward`)은 어디서 실행해도 상관없습니다.
 
-## 설정 (.env)
+## 설정 (환경 변수)
+
+`.env` 파일이나 셸·스택의 환경 변수로 지정합니다. 새 설정을 추가할 때는 `docker-compose.yml`의 `environment`에도 함께 추가해야 컨테이너에 전달됩니다.
 
 | 변수 | 기본값 | 설명 |
 | --- | --- | --- |

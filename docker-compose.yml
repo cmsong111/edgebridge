@@ -2,10 +2,17 @@ services:
   edgebridge:
     build: .
     container_name: edgebridge
-    env_file: .env
+    # Values come from the shell, the stack's environment settings, or a local .env file (if present)
     environment:
-      # Always listen on every interface inside the container
       SERVER_IP: "${SERVER_IP:-0.0.0.0}"
+      SERVER_PORT: "${SERVER_PORT:-8088}"
+      SMARTTHINGS_TOKEN: "${SMARTTHINGS_TOKEN:-}"
+      FORWARDING_TIMEOUT: "${FORWARDING_TIMEOUT:-5}"
+      CONSOLE_OUTPUT: "${CONSOLE_OUTPUT:-yes}"
+      LOGFILE_OUTPUT: "${LOGFILE_OUTPUT:-no}"
+      LOGFILE: "${LOGFILE:-edgebridge.log}"
+      DEBUG: "${DEBUG:-no}"
+      TZ: "${TZ:-Asia/Seoul}"
     ports:
       - "${HOST_PORT:-8088}:${SERVER_PORT:-8088}"
     volumes:
