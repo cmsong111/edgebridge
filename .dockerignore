@@ -1,0 +1,4 @@
+# 이미지에는 실행에 필요한 파일만 넣습니다 (.env의 토큰이 이미지에 들어가지 않도록)
+*
+!edgebridge.py
+!requirements.txt

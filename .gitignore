@@ -1,1 +1,9 @@
+# 로컬 설정 (토큰 포함) - .env.example만 커밋합니다
+.env
+.env.*
+!.env.example
+
+# 실행 중 생성되는 파일
 .registrations
+*.log
+__pycache__/

@@ -1,0 +1,16 @@
+services:
+  edgebridge:
+    build: .
+    container_name: edgebridge
+    env_file: .env
+    environment:
+      # Always listen on every interface inside the container
+      SERVER_IP: "${SERVER_IP:-0.0.0.0}"
+    ports:
+      - "${HOST_PORT:-8088}:${SERVER_PORT:-8088}"
+    volumes:
+      - edgebridge-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  edgebridge-data:
